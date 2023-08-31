@@ -150,6 +150,42 @@ def circularizing_operation(loc_time_df):
         return loc_time_df['normalized_x']*100
     else:
         return (200 - 100*loc_time_df['normalized_x'])
+    
+
+## define a function to return a list of the required cell type indices
+def get_celltype_indices(region, topdir, session, celltype = 'p'):
+
+    # find the correct region directory
+    if region == 'CA1':
+        region_path = CA1_SESSION_PATH
+    elif region == 'CA3':
+        region_path = CA3_SESSION_PATH
+    elif region == 'EC':
+        region_path = EC_SESSION_PATH
+    else:
+        raise Exception("Invalid region name. Input must be either of 'CA1', 'CA3' or 'EC'")
+    
+    # access the cell-spiketime file
+    cell_spt_filename = f"cell-spiketime-file-{session}.csv"
+    cell_spt_file_path = os.path.join(SESSIONS_DATA_PATH, region_path, topdir, session, cell_spt_filename)
+
+    # check if the the file exists and read the file if it does
+    if os.path.isfile(cell_spt_file_path):
+        cell_spt_df = pd.read_csv(cell_spt_file_path)
+        # drop nan's if any (there shouldn't be)
+        cell_spt_df = cell_spt_df.dropna()
+
+        # consider the appropriate celltype and the region
+        cell_spt_df = (cell_spt_df.loc[cell_spt_df['region'] == region]
+                       .loc[cell_spt_df['celltype'] == celltype]
+                       )
+    else:
+        raise FileNotFoundError(f"Could not find the file : {cell_spt_file_path}")
+    
+    cell_indices = cell_spt_df['cell'].unique()
+
+    return np.sort(cell_indices)
+
 
 #######################################################################################################################
 ###                         PART 1 : Generating the files
